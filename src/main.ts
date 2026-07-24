@@ -1,9 +1,11 @@
 import "./vanilla.scss";
+import { statusNavigationItems } from "./navigation";
 import {
   classifyStatus,
   compareVersions,
   type ChannelRisk,
   type SnapStatus,
+  type TrackingMode,
 } from "./status";
 
 type ChannelInfo = { version: string | null; versions: string[] };
@@ -14,6 +16,7 @@ type SnapRecord = {
   channels: Record<ChannelRisk, ChannelInfo>;
   storeError: string | null;
   upstream: { version: string | null; url: string | null; error: string | null };
+  tracking?: { mode: TrackingMode; url?: string; note?: string };
 };
 type DashboardData = {
   generatedAt: string;
@@ -29,19 +32,25 @@ const statusOrder: Record<SnapStatus, number> = {
   outdated: 0,
   testing: 1,
   unknown: 2,
-  current: 3,
+  manual: 3,
+  static: 4,
+  current: 5,
 };
 const statusLabels: Record<SnapStatus, string> = {
   current: "Current",
   testing: "In testing",
   outdated: "Update needed",
   unknown: "Needs mapping",
+  manual: "Manual review",
+  static: "No updates expected",
 };
 const chipClasses: Record<SnapStatus, string> = {
   current: "p-chip--positive",
   testing: "p-chip--caution",
   outdated: "p-chip--negative",
   unknown: "p-chip--information",
+  manual: "p-chip--information",
+  static: "p-chip--positive",
 };
 
 const escapeHtml = (value: string): string =>
@@ -81,6 +90,7 @@ async function load(): Promise<void> {
     status: classifyStatus(
       Object.fromEntries(risks.map((risk) => [risk, snap.channels[risk]?.versions ?? []])),
       snap.upstream.version,
+      snap.tracking?.mode ?? "automatic",
     ),
   }));
   render(data, snaps);
@@ -93,7 +103,7 @@ function render(data: DashboardData, snaps: EnrichedSnap[]): void {
   let sortDirection: 1 | -1 = 1;
 
   const counts = Object.fromEntries(
-    (["current", "testing", "outdated", "unknown"] as SnapStatus[]).map((status) => [
+    (["current", "testing", "outdated", "unknown", "manual", "static"] as SnapStatus[]).map((status) => [
       status,
       snaps.filter((snap) => snap.status === status).length,
     ]),
@@ -117,10 +127,7 @@ function render(data: DashboardData, snaps: EnrichedSnap[]): void {
         </div>
         <nav class="p-navigation__nav" aria-label="Status filters">
           <ul class="p-navigation__items">
-            ${navItem("All snaps", "all", true)}
-            ${navItem("Update needed", "outdated")}
-            ${navItem("In testing", "testing")}
-            ${navItem("Needs mapping", "unknown")}
+            ${statusNavigationItems.map(({ label, status }, index) => navItem(label, status, index === 0)).join("")}
           </ul>
           <ul class="p-navigation__items">
             <li class="p-navigation__item"><a class="p-navigation__link" href="https://github.com/popey/snap-status" target="_blank" rel="noreferrer">GitHub ↗</a></li>
@@ -136,6 +143,8 @@ function render(data: DashboardData, snaps: EnrichedSnap[]): void {
         <button data-status="outdated"><strong class="status-count--outdated">${counts.outdated}</strong> need updates</button>
         <button data-status="testing"><strong class="status-count--testing">${counts.testing}</strong> in testing</button>
         <button data-status="unknown"><strong>${counts.unknown}</strong> need mapping</button>
+        <button data-status="manual"><strong>${counts.manual}</strong> manual review</button>
+        <button data-status="static"><strong>${counts.static}</strong> no updates expected</button>
         <span>Synced <strong>${escapeHtml(relativeTime(data.generatedAt))}</strong></span>
       </div>
     </section>
@@ -175,6 +184,8 @@ function render(data: DashboardData, snaps: EnrichedSnap[]): void {
               ${filterButton("Update needed", "outdated", counts.outdated)}
               ${filterButton("In testing", "testing", counts.testing)}
               ${filterButton("Needs mapping", "unknown", counts.unknown)}
+              ${filterButton("Manual review", "manual", counts.manual)}
+              ${filterButton("No updates expected", "static", counts.static)}
             </div>
             <div class="table-scroll">
               <table class="p-table--mobile-card" role="grid">
@@ -333,7 +344,10 @@ function rowHtml(snap: EnrichedSnap): string {
     ? snap.upstream.url
       ? `<a href="${safeUrl(snap.upstream.url)}" target="_blank" rel="noreferrer"><code>${escapeHtml(snap.upstream.version)}</code></a>`
       : `<code>${escapeHtml(snap.upstream.version)}</code>`
-    : `<span class="u-text--muted" title="${escapeHtml(snap.upstream.error ?? "No upstream version")}">—</span>`;
+    : snap.tracking?.url
+      ? `<a href="${safeUrl(snap.tracking.url)}" target="_blank" rel="noreferrer" title="${escapeHtml(snap.tracking.note ?? "Source details")}">${snap.tracking.mode === "static" ? "Story" : "Source"} ↗</a>`
+      : `<span class="u-text--muted" title="${escapeHtml(snap.upstream.error ?? "No upstream version")}">—</span>`;
+  const statusTitle = snap.tracking?.note ? ` title="${escapeHtml(snap.tracking.note)}"` : "";
   return `<tr>
     <th scope="row" data-heading="Application" class="app-cell"><a href="${safeUrl(snap.storeUrl)}" target="_blank" rel="noreferrer">${escapeHtml(snap.title)}</a><small>${escapeHtml(snap.name)}</small></th>
     ${channelCell(snap.channels.stable, "Stable")}
@@ -341,7 +355,7 @@ function rowHtml(snap: EnrichedSnap): string {
     ${channelCell(snap.channels.beta, "Beta")}
     ${channelCell(snap.channels.edge, "Edge")}
     <td data-heading="Upstream">${upstream}</td>
-    <td data-heading="Status"><span class="${chipClasses[snap.status]}">${statusLabels[snap.status]}</span></td>
+    <td data-heading="Status"><span class="${chipClasses[snap.status]}"${statusTitle}>${statusLabels[snap.status]}</span></td>
   </tr>`;
 }
 

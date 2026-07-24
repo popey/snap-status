@@ -1,5 +1,6 @@
 export type ChannelRisk = "stable" | "candidate" | "beta" | "edge";
-export type SnapStatus = "current" | "testing" | "outdated" | "unknown";
+export type TrackingMode = "automatic" | "manual" | "static";
+export type SnapStatus = "current" | "testing" | "outdated" | "unknown" | "manual" | "static";
 export type VersionToken = number | string;
 
 const PRE_RELEASE = new Set(["alpha", "beta", "pre", "preview", "rc"]);
@@ -42,7 +43,10 @@ export function compareVersions(left: string, right: string): number {
 export function classifyStatus(
   channels: Partial<Record<ChannelRisk, string[]>>,
   upstream: string | null,
+  tracking: TrackingMode = "automatic",
 ): SnapStatus {
+  if (tracking === "manual") return "manual";
+  if (tracking === "static") return "static";
   if (!upstream) return "unknown";
   if ((channels.stable ?? []).some((version) => compareVersions(version, upstream) >= 0)) {
     return "current";

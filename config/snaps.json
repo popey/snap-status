@@ -1,7 +1,7 @@
 {
   "publisher": "popey",
   "snaps": [
-    {"name":"add-flatpak","title":"Add Flatpak"},
+    {"name":"add-flatpak","title":"Add Flatpak","tracking":{"mode":"manual","url":"https://github.com/popey/add-flatpak","note":"Source is maintained in the packaging repository without a comparable release feed."}},
     {"name":"azimuth","upstream":{"provider":"github","repo":"mdsteele/azimuth"}},
     {"name":"b2","upstream":{"provider":"github","repo":"tom-seddon/b2"}},
     {"name":"bandwhich","upstream":{"provider":"github","repo":"imsnif/bandwhich"}},
@@ -20,7 +20,7 @@
     {"name":"halloy","upstream":{"provider":"github","repo":"squidowl/halloy"}},
     {"name":"iamb","upstream":{"provider":"github","repo":"ulyssa/iamb"}},
     {"name":"ladder","upstream":{"provider":"github","repo":"everywall/ladder"}},
-    {"name":"lapin","upstream":{"provider":"github","repo":"Canop/lapin"}},
+    {"name":"lapin","tracking":{"mode":"manual","url":"https://github.com/popey/lapin-snap","note":"The snap tracks an upstream commit and has no comparable release feed."}},
     {"name":"libation","upstream":{"provider":"github","repo":"rmcrackan/Libation"}},
     {"name":"linuxtycoon"},
     {"name":"mame","upstream":{"provider":"github","repo":"mamedev/mame"}},
@@ -30,17 +30,17 @@
     {"name":"natron","upstream":{"provider":"github","repo":"NatronGitHub/Natron"}},
     {"name":"ncspot","upstream":{"provider":"github","repo":"hrkfdn/ncspot"}},
     {"name":"notepadnext","upstream":{"provider":"github","repo":"dail8859/NotepadNext"}},
-    {"name":"null"},
-    {"name":"openboardview","upstream":{"provider":"github","repo":"inflex/OpenBoardView"}},
+    {"name":"null","tracking":{"mode":"static","url":"https://popey.com/blog/2021/01/null/","note":"An intentionally empty joke snap with no upstream project or expected updates."}},
+    {"name":"openboardview","tracking":{"mode":"manual","url":"https://github.com/popey/openboardview-snap","note":"Packaging source is known, but no reliable comparable release feed is available."}},
     {"name":"pencil","upstream":{"provider":"github","repo":"evolus/pencil"}},
     {"name":"pioneer","upstream":{"provider":"github","repo":"pioneerspacesim/pioneer"}},
     {"name":"piqueserver","upstream":{"provider":"github","repo":"piqueserver/piqueserver"}},
-    {"name":"pwbm","upstream":{"provider":"github","repo":"popey/pwbm"}},
+    {"name":"pwbm","tracking":{"mode":"manual","url":"https://github.com/popey/pwbm","note":"Source is maintained in this repository without a comparable release feed."}},
     {"name":"rota","upstream":{"provider":"github","repo":"HarmonyHoney/ROTA"}},
     {"name":"rustscan","upstream":{"provider":"github","repo":"RustScan/RustScan"}},
     {"name":"sbommage","upstream":{"provider":"github","repo":"popey/sbommage"}},
     {"name":"session-desktop","upstream":{"provider":"github","repo":"session-foundation/session-desktop"}},
-    {"name":"sfxr","upstream":{"provider":"github","repo":"popey/sfxr"}},
+    {"name":"sfxr","tracking":{"mode":"manual","url":"https://github.com/popey/sfxr-snap","note":"Packaging source is known, but no reliable comparable release feed is available."}},
     {"name":"shattered-pixel-dungeon","upstream":{"provider":"github","repo":"00-Evan/shattered-pixel-dungeon"}},
     {"name":"slomore","upstream":{"provider":"github","repo":"popey/slomore"}},
     {"name":"spectrum-analyser","upstream":{"provider":"github","repo":"TheGoodDoktor/8BitAnalysers"}},
@@ -53,6 +53,6 @@
     {"name":"twinejs","upstream":{"provider":"github","repo":"klembot/twinejs"}},
     {"name":"word-salad"},
     {"name":"x16emu","upstream":{"provider":"github","repo":"X16Community/x16-emulator"}},
-    {"name":"zx-pokemaster","upstream":{"provider":"github","repo":"ladyeklipse/ZX-Pokemaster"}}
+    {"name":"zx-pokemaster","tracking":{"mode":"manual","url":"https://github.com/popey/zx-pokemaster-snap","note":"The upstream publishes a non-version tag, so releases require manual review."}}
   ]
 }

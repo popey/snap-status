@@ -12,7 +12,10 @@ A compact maintenance dashboard for snaps published by [`popey`](https://snapcra
   - **Current** — stable has reached upstream.
   - **In testing** — candidate, beta, or edge has reached upstream.
   - **Update needed** — every published channel is behind upstream.
-  - **Needs mapping** — upstream cannot be compared reliably.
+  - **Needs mapping** — the upstream source is not yet identified.
+  - **Manual review** — the source is known but has no safely comparable release feed.
+  - **No updates expected** — an intentionally static snap has no upstream lifecycle.
+- Links manual entries to their source repository and intentional static entries to their background story.
 - Supports search, status filters, sortable columns, responsive layouts, and accessible reduced-motion behavior.
 - Refreshes and deploys hourly without making automated data commits.
 

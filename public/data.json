@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-23T15:10:58.337163Z",
+  "generatedAt": "2026-07-24T11:17:43.844251Z",
   "publisher": "popey",
   "count": 53,
   "snaps": [
@@ -32,8 +32,13 @@
       "storeError": null,
       "upstream": {
         "version": null,
-        "url": null,
-        "error": "Upstream not configured"
+        "url": "https://github.com/popey/add-flatpak",
+        "error": null
+      },
+      "tracking": {
+        "mode": "manual",
+        "url": "https://github.com/popey/add-flatpak",
+        "note": "Source is maintained in the packaging repository without a comparable release feed."
       }
     },
     {
@@ -708,8 +713,13 @@
       "storeError": null,
       "upstream": {
         "version": null,
-        "url": null,
-        "error": "No releases or tags found"
+        "url": "https://github.com/popey/lapin-snap",
+        "error": null
+      },
+      "tracking": {
+        "mode": "manual",
+        "url": "https://github.com/popey/lapin-snap",
+        "note": "The snap tracks an upstream commit and has no comparable release feed."
       }
     },
     {
@@ -718,9 +728,9 @@
       "storeUrl": "https://snapcraft.io/libation",
       "channels": {
         "stable": {
-          "version": "13.5.0",
+          "version": "13.5.1",
           "versions": [
-            "13.5.0"
+            "13.5.1"
           ]
         },
         "candidate": {
@@ -853,9 +863,9 @@
       "storeUrl": "https://snapcraft.io/mindustry",
       "channels": {
         "stable": {
-          "version": "v159.2",
+          "version": "v159.7",
           "versions": [
-            "v159.2"
+            "v159.7"
           ]
         },
         "candidate": {
@@ -886,8 +896,10 @@
       "storeUrl": "https://snapcraft.io/monolith",
       "channels": {
         "stable": {
-          "version": null,
-          "versions": []
+          "version": "v2.10.1",
+          "versions": [
+            "v2.10.1"
+          ]
         },
         "candidate": {
           "version": null,
@@ -898,15 +910,17 @@
           "versions": []
         },
         "edge": {
-          "version": null,
-          "versions": []
+          "version": "v2.10.1",
+          "versions": [
+            "v2.10.1"
+          ]
         }
       },
-      "storeError": "HTTP Error 429: Too Many Requests",
+      "storeError": null,
       "upstream": {
-        "version": null,
-        "url": null,
-        "error": "Collection failed"
+        "version": "v2.10.1",
+        "url": "https://github.com/Y2Z/monolith/releases",
+        "error": null
       }
     },
     {
@@ -1041,8 +1055,13 @@
       "storeError": null,
       "upstream": {
         "version": null,
-        "url": null,
-        "error": "HTTP Error 404: Not Found"
+        "url": "https://github.com/popey/openboardview-snap",
+        "error": null
+      },
+      "tracking": {
+        "mode": "manual",
+        "url": "https://github.com/popey/openboardview-snap",
+        "note": "Packaging source is known, but no reliable comparable release feed is available."
       }
     },
     {
@@ -1107,8 +1126,13 @@
       "storeError": null,
       "upstream": {
         "version": null,
-        "url": null,
-        "error": "No releases or tags found"
+        "url": "https://github.com/popey/pwbm",
+        "error": null
+      },
+      "tracking": {
+        "mode": "manual",
+        "url": "https://github.com/popey/pwbm",
+        "note": "Source is maintained in this repository without a comparable release feed."
       }
     },
     {
@@ -1299,9 +1323,9 @@
           "versions": []
         },
         "edge": {
-          "version": "1.18.0",
+          "version": "1.18.1",
           "versions": [
-            "1.18.0"
+            "1.18.1"
           ]
         }
       },
@@ -1343,8 +1367,13 @@
       "storeError": null,
       "upstream": {
         "version": null,
-        "url": null,
-        "error": "No releases or tags found"
+        "url": "https://github.com/popey/sfxr-snap",
+        "error": null
+      },
+      "tracking": {
+        "mode": "manual",
+        "url": "https://github.com/popey/sfxr-snap",
+        "note": "Packaging source is known, but no reliable comparable release feed is available."
       }
     },
     {
@@ -1519,7 +1548,8 @@
         "stable": {
           "version": "v1.48.0",
           "versions": [
-            "v1.48.0"
+            "v1.48.0",
+            "v1.49.0"
           ]
         },
         "candidate": {
@@ -1531,9 +1561,9 @@
           "versions": []
         },
         "edge": {
-          "version": "v1.48.0",
+          "version": "v1.49.0",
           "versions": [
-            "v1.48.0"
+            "v1.49.0"
           ]
         }
       },
@@ -1572,7 +1602,7 @@
       },
       "storeError": null,
       "upstream": {
-        "version": "v7.0.4",
+        "version": "v7.0.5",
         "url": "https://github.com/telegramdesktop/tdesktop/releases",
         "error": null
       }
@@ -1734,8 +1764,13 @@
       "storeError": null,
       "upstream": {
         "version": null,
-        "url": null,
-        "error": "Non-version tag in github response: public"
+        "url": "https://github.com/popey/zx-pokemaster-snap",
+        "error": null
+      },
+      "tracking": {
+        "mode": "manual",
+        "url": "https://github.com/popey/zx-pokemaster-snap",
+        "note": "The upstream publishes a non-version tag, so releases require manual review."
       }
     },
     {
@@ -1765,8 +1800,13 @@
       "storeError": null,
       "upstream": {
         "version": null,
-        "url": null,
-        "error": "Upstream not configured"
+        "url": "https://popey.com/blog/2021/01/null/",
+        "error": null
+      },
+      "tracking": {
+        "mode": "static",
+        "url": "https://popey.com/blog/2021/01/null/",
+        "note": "An intentionally empty joke snap with no upstream project or expected updates."
       }
     }
   ]

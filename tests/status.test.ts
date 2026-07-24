@@ -35,4 +35,9 @@ describe("snap status", () => {
   it("is unknown without upstream data", () => {
     expect(classifyStatus({ stable: ["1.1.0"] }, null)).toBe("unknown");
   });
+
+  it("uses explicit statuses for non-automatic tracking", () => {
+    expect(classifyStatus({ stable: ["1.0"] }, null, "manual")).toBe("manual");
+    expect(classifyStatus({ stable: ["null"] }, null, "static")).toBe("static");
+  });
 });
