@@ -5,10 +5,13 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 import json
+import math
 import os
 from pathlib import Path
+import random
 import re
 import tempfile
+import time
 from typing import Any
 from urllib.error import HTTPError
 from urllib.parse import quote
@@ -16,6 +19,8 @@ from urllib.request import Request, urlopen
 
 RISKS = ("stable", "candidate", "beta", "edge")
 USER_AGENT = "snap-status/0.1 (+https://github.com/popey/snap-status)"
+REQUEST_ATTEMPTS = 5
+STORE_WORKERS = 3
 
 
 def _natural_key(value: str) -> list[tuple[int, Any]]:
@@ -83,8 +88,20 @@ def request_json(url: str, headers: dict[str, str] | None = None) -> Any:
     merged = {"User-Agent": USER_AGENT, "Accept": "application/json"}
     if headers:
         merged.update(headers)
-    with urlopen(Request(url, headers=merged), timeout=30) as response:
-        return json.load(response)
+    for attempt in range(REQUEST_ATTEMPTS):
+        try:
+            with urlopen(Request(url, headers=merged), timeout=30) as response:
+                return json.load(response)
+        except HTTPError as error:
+            if error.code not in {429, 500, 502, 503, 504} or attempt == REQUEST_ATTEMPTS - 1:
+                raise
+            retry_after = error.headers.get("Retry-After") if error.headers else None
+            try:
+                delay = max(0.0, float(retry_after)) if retry_after else 2 ** attempt
+            except ValueError:
+                delay = 2 ** attempt
+            time.sleep(delay + random.uniform(0, 0.5))
+    raise AssertionError("retry loop exhausted")
 
 
 def discover_store_snaps(publisher: str) -> list[str]:
@@ -168,8 +185,16 @@ def fetch_upstream(config: dict[str, Any] | None) -> dict[str, Any]:
 
 def collect_snap(entry: dict[str, Any]) -> dict[str, Any]:
     name = entry["name"]
-    store = fetch_store_snap(name)
     tracking = tracking_for_entry(entry)
+    try:
+        store = fetch_store_snap(name)
+    except Exception as error:
+        store = {
+            "title": name,
+            "storeUrl": f"https://snapcraft.io/{name}",
+            "channels": {risk: {"version": None, "versions": []} for risk in RISKS},
+            "storeError": str(error),
+        }
     if tracking["mode"] == "automatic":
         upstream = fetch_upstream(entry.get("upstream"))
     else:
@@ -192,7 +217,7 @@ def collect(config_path: Path) -> dict[str, Any]:
     discovered = discover_store_snaps(config["publisher"])
     inventory = merge_inventory(config["snaps"], discovered)
     snaps: list[dict[str, Any]] = []
-    with ThreadPoolExecutor(max_workers=10) as pool:
+    with ThreadPoolExecutor(max_workers=STORE_WORKERS) as pool:
         futures = {pool.submit(collect_snap, entry): entry for entry in inventory}
         for future in as_completed(futures):
             entry = futures[future]
@@ -223,6 +248,19 @@ def collect(config_path: Path) -> dict[str, Any]:
     }
 
 
+def validate_collection(payload: dict[str, Any], max_store_failure_ratio: float = 0.1) -> None:
+    """Reject broadly degraded snapshots so they cannot replace healthy production data."""
+    snaps = payload["snaps"]
+    failures = [item for item in snaps if item["storeError"]]
+    allowed = max(2, math.floor(len(snaps) * max_store_failure_ratio))
+    if len(failures) > allowed:
+        examples = ", ".join(item["name"] for item in failures[:5])
+        raise RuntimeError(
+            f"Store data quality gate failed: {len(failures)}/{len(snaps)} requests failed "
+            f"(allowed {allowed}; examples: {examples})"
+        )
+
+
 def write_atomic(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", dir=path.parent, delete=False) as handle:
@@ -238,6 +276,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path("public/data.json"))
     args = parser.parse_args()
     payload = collect(args.config)
+    validate_collection(payload)
     write_atomic(args.output, payload)
     errors = sum(
         bool(item["storeError"] or item["upstream"]["error"])

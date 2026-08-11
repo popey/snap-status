@@ -8,6 +8,7 @@ A compact maintenance dashboard for snaps published by [`popey`](https://snapcra
 - Retains explicitly configured snaps that are temporarily unpublished.
 - Collapses architecture-specific Store revisions while exposing version variants.
 - Fetches upstream versions from GitHub, Codeberg, and npm.
+- Retries transient API failures with exponential backoff and refuses to deploy broadly degraded Store data.
 - Classifies each snap as:
   - **Current** — stable has reached upstream.
   - **In testing** — candidate, beta, or edge has reached upstream.
