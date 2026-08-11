@@ -2,9 +2,19 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+from urllib.error import HTTPError
 
-from scripts.collect import collapse_channels, collect, merge_inventory, parse_upstream_payload, tracking_for_entry
+from scripts.collect import (
+    collapse_channels,
+    collect,
+    collect_snap,
+    merge_inventory,
+    parse_upstream_payload,
+    request_json,
+    tracking_for_entry,
+    validate_collection,
+)
 
 
 class CollapseChannelsTest(unittest.TestCase):
@@ -98,6 +108,17 @@ class TrackingMetadataTest(unittest.TestCase):
 
 
 class CollectionFallbackTest(unittest.TestCase):
+    @patch("scripts.collect.fetch_upstream", return_value={"version": "2.0", "url": "https://example.com", "error": None})
+    @patch("scripts.collect.fetch_store_snap", side_effect=HTTPError("url", 429, "Too Many Requests", {}, None))
+    def test_store_failure_does_not_erase_upstream_mapping(self, _store, _upstream):
+        snap = collect_snap({
+            "name": "example",
+            "upstream": {"provider": "github", "repo": "owner/example"},
+        })
+
+        self.assertIn("429", snap["storeError"])
+        self.assertEqual(snap["upstream"]["version"], "2.0")
+
     @patch("scripts.collect.discover_store_snaps", return_value=[])
     @patch("scripts.collect.collect_snap", side_effect=RuntimeError("store unavailable"))
     def test_preserves_manual_tracking_when_collection_fails(self, _collect_snap, _discover):
@@ -124,6 +145,43 @@ class CollectionFallbackTest(unittest.TestCase):
         })
         self.assertEqual(snap["upstream"]["url"], "https://example.com/source")
         self.assertIsNone(snap["upstream"]["error"])
+
+
+class RequestRetryTest(unittest.TestCase):
+    @patch("scripts.collect.time.sleep")
+    @patch("scripts.collect.random.uniform", return_value=0)
+    @patch("scripts.collect.urlopen")
+    def test_retries_429_using_retry_after(self, urlopen, _random, sleep):
+        error = HTTPError("url", 429, "Too Many Requests", {"Retry-After": "3"}, None)
+        response = Mock()
+        response.__enter__ = Mock(return_value=response)
+        response.__exit__ = Mock(return_value=False)
+        response.read.return_value = b'{"ok": true}'
+        urlopen.side_effect = [error, response]
+
+        self.assertEqual(request_json("https://example.com"), {"ok": True})
+        sleep.assert_called_once_with(3.0)
+
+
+class CollectionQualityGateTest(unittest.TestCase):
+    def test_rejects_broad_store_failure(self):
+        payload = {
+            "snaps": [
+                {"name": f"snap-{index}", "storeError": "HTTP 429" if index < 3 else None}
+                for index in range(10)
+            ]
+        }
+        with self.assertRaisesRegex(RuntimeError, "3/10"):
+            validate_collection(payload)
+
+    def test_tolerates_small_number_of_isolated_failures(self):
+        payload = {
+            "snaps": [
+                {"name": f"snap-{index}", "storeError": "timeout" if index == 0 else None}
+                for index in range(10)
+            ]
+        }
+        validate_collection(payload)
 
     @patch("scripts.collect.discover_store_snaps", return_value=[])
     @patch("scripts.collect.collect_snap", side_effect=RuntimeError("store unavailable"))
