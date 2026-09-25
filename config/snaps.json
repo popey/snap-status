@@ -6,6 +6,7 @@
     {"name":"b2","upstream":{"provider":"github","repo":"tom-seddon/b2"}},
     {"name":"bandwhich","upstream":{"provider":"github","repo":"imsnif/bandwhich"}},
     {"name":"bombsquad","upstream":{"provider":"github","repo":"efroemling/ballistica"}},
+    {"name":"calibre","upstream":{"provider":"github","repo":"kovidgoyal/calibre"}},
     {"name":"classicube","upstream":{"provider":"github","repo":"ClassiCube/ClassiCube"}},
     {"name":"defold","upstream":{"provider":"github","repo":"defold/defold"}},
     {"name":"dog","upstream":{"provider":"github","repo":"ogham/dog"}},
