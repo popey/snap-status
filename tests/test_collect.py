@@ -1,11 +1,14 @@
 import json
+from http.client import IncompleteRead
 from pathlib import Path
+import ssl
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 from scripts.collect import (
+    REQUEST_ATTEMPTS,
     collapse_channels,
     collect,
     collect_snap,
@@ -149,6 +152,72 @@ class CollectionFallbackTest(unittest.TestCase):
 
 class RequestRetryTest(unittest.TestCase):
     @patch("scripts.collect.time.sleep")
+    @patch("scripts.collect.urlopen")
+    def test_retries_interrupted_response_reads(self, urlopen, _sleep):
+        for error in (TimeoutError("read timed out"), ssl.SSLEOFError("unexpected EOF"),
+                      IncompleteRead(b'{"ok":', 5)):
+            with self.subTest(error=error):
+                urlopen.reset_mock()
+                response = urlopen.return_value.__enter__.return_value
+                response.read.side_effect = [error, b'{"ok": true}']
+
+                self.assertEqual(request_json("https://example.com"), {"ok": True})
+                self.assertEqual(urlopen.call_count, 2)
+
+    @patch("scripts.collect.time.sleep")
+    @patch("scripts.collect.random.uniform", return_value=0)
+    @patch("scripts.collect.urlopen")
+    def test_retries_transport_failures(self, urlopen, _random, sleep):
+        errors = [
+            URLError(ssl.SSLEOFError("EOF occurred in violation of protocol")),
+            URLError("Temporary failure in name resolution"),
+            TimeoutError("read timed out"),
+            ConnectionResetError("connection reset"),
+            IncompleteRead(b'{"ok":', 5),
+        ]
+        for error in errors:
+            with self.subTest(error=error):
+                sleep.reset_mock()
+                urlopen.reset_mock()
+                response = Mock()
+                response.__enter__ = Mock(return_value=response)
+                response.__exit__ = Mock(return_value=False)
+                response.read.return_value = b'{"ok": true}'
+                urlopen.side_effect = [error, error, response]
+
+                self.assertEqual(request_json("https://example.com"), {"ok": True})
+                self.assertEqual(urlopen.call_count, 3)
+                self.assertEqual([call.args[0] for call in sleep.call_args_list], [1, 2])
+
+    @patch("scripts.collect.time.sleep")
+    @patch("scripts.collect.urlopen")
+    def test_transport_retries_are_bounded(self, urlopen, sleep):
+        error = URLError(ssl.SSLEOFError("unexpected EOF"))
+        urlopen.side_effect = error
+
+        with self.assertRaises(URLError) as raised:
+            request_json("https://example.com")
+
+        self.assertIs(raised.exception, error)
+        self.assertEqual(urlopen.call_count, REQUEST_ATTEMPTS)
+        self.assertEqual(sleep.call_count, REQUEST_ATTEMPTS - 1)
+
+    @patch("scripts.collect.time.sleep")
+    @patch("scripts.collect.urlopen")
+    def test_does_not_retry_permanent_http_errors(self, urlopen, sleep):
+        for code in (401, 403, 404):
+            with self.subTest(code=code):
+                urlopen.reset_mock()
+                error = HTTPError("url", code, "Permanent error", {}, None)
+                urlopen.side_effect = error
+
+                with self.assertRaises(HTTPError):
+                    request_json("https://example.com")
+
+                self.assertEqual(urlopen.call_count, 1)
+                sleep.assert_not_called()
+
+    @patch("scripts.collect.time.sleep")
     @patch("scripts.collect.random.uniform", return_value=0)
     @patch("scripts.collect.urlopen")
     def test_retries_429_using_retry_after(self, urlopen, _random, sleep):
@@ -171,7 +240,7 @@ class CollectionQualityGateTest(unittest.TestCase):
                 for index in range(10)
             ]
         }
-        with self.assertRaisesRegex(RuntimeError, "3/10"):
+        with self.assertRaisesRegex(RuntimeError, "3/10.*snap-0: HTTP 429"):
             validate_collection(payload)
 
     def test_tolerates_small_number_of_isolated_failures(self):

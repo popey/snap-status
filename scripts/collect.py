@@ -4,16 +4,18 @@ import argparse
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from http.client import IncompleteRead
 import json
 import math
 import os
 from pathlib import Path
 import random
 import re
+from ssl import SSLEOFError
 import tempfile
 import time
 from typing import Any
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
@@ -89,6 +91,7 @@ def request_json(url: str, headers: dict[str, str] | None = None) -> Any:
     if headers:
         merged.update(headers)
     for attempt in range(REQUEST_ATTEMPTS):
+        delay = 2 ** attempt
         try:
             with urlopen(Request(url, headers=merged), timeout=30) as response:
                 return json.load(response)
@@ -100,7 +103,12 @@ def request_json(url: str, headers: dict[str, str] | None = None) -> Any:
                 delay = max(0.0, float(retry_after)) if retry_after else 2 ** attempt
             except ValueError:
                 delay = 2 ** attempt
-            time.sleep(delay + random.uniform(0, 0.5))
+        except (URLError, TimeoutError, ConnectionError, IncompleteRead, SSLEOFError):
+            # urllib wraps connection/TLS failures in URLError; response reads
+            # can also raise timeouts, connection errors, or incomplete reads.
+            if attempt == REQUEST_ATTEMPTS - 1:
+                raise
+        time.sleep(delay + random.uniform(0, 0.5))
     raise AssertionError("retry loop exhausted")
 
 
@@ -254,7 +262,9 @@ def validate_collection(payload: dict[str, Any], max_store_failure_ratio: float 
     failures = [item for item in snaps if item["storeError"]]
     allowed = max(2, math.floor(len(snaps) * max_store_failure_ratio))
     if len(failures) > allowed:
-        examples = ", ".join(item["name"] for item in failures[:5])
+        examples = "; ".join(
+            f"{item['name']}: {item['storeError']}" for item in failures[:5]
+        )
         raise RuntimeError(
             f"Store data quality gate failed: {len(failures)}/{len(snaps)} requests failed "
             f"(allowed {allowed}; examples: {examples})"
