@@ -43,6 +43,7 @@
     {"name":"session-desktop","upstream":{"provider":"github","repo":"session-foundation/session-desktop"}},
     {"name":"sfxr","tracking":{"mode":"manual","url":"https://github.com/popey/sfxr-snap","note":"Packaging source is known, but no reliable comparable release feed is available."}},
     {"name":"shattered-pixel-dungeon","upstream":{"provider":"github","repo":"00-Evan/shattered-pixel-dungeon"}},
+    {"name":"silo-server","title":"Silo Server","tracking":{"mode":"manual","url":"https://github.com/popey/silo-server-snap","note":"The snap tracks upstream main and has no comparable release or tag feed."}},
     {"name":"slomore","upstream":{"provider":"github","repo":"popey/slomore"}},
     {"name":"spectrum-analyser","upstream":{"provider":"github","repo":"TheGoodDoktor/8BitAnalysers"}},
     {"name":"streamsprouting","title":"Stream Sprouting"},
